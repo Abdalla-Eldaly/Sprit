@@ -21,7 +21,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'IEEE',
       onGenerateRoute: AppRoutes().generateRoute,
-      initialRoute: SplashScreenRoute,
+      initialRoute: ScanScreen.routeName,
       routes: {
         SplashScreen.routeName :(_)=>SplashScreen(),
         HomeScreen.routeName :(_)=>HomeScreen(),

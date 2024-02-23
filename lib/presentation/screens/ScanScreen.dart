@@ -1,7 +1,10 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
 import 'package:qr_ieee/constants/colors.dart';
 import 'package:qr_ieee/constants/text_style.dart';
+import 'package:qr_ieee/data/model/Person.dart';
+import 'package:qr_ieee/data/web_services/web_Service.dart';
 
 import '../../constants/strings.dart';
 
@@ -14,7 +17,7 @@ class ScanScreen extends StatefulWidget {
 
 class _ScanScreenState extends State<ScanScreen> with TickerProviderStateMixin {
   final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
-  Barcode? result;
+  String? result;
   QRViewController? controller;
   bool isFlashOn = false;
   bool isScanning = false;
@@ -110,7 +113,7 @@ class _ScanScreenState extends State<ScanScreen> with TickerProviderStateMixin {
             child: Opacity(
               opacity: fadeInOutController.value,
               child: result != null
-                  ? _buildResultText('QR Code Data: \n\n${result!.code}')
+                  ? _buildResultText('QR Code Data: \n\n${result}')
                   : _buildResultText('Scan a QR code'),
             ),
           ),
@@ -149,20 +152,41 @@ class _ScanScreenState extends State<ScanScreen> with TickerProviderStateMixin {
   }
 
   void _onQRViewCreated(QRViewController controller) {
+
     this.controller = controller;
-    controller.scannedDataStream.listen((scanData) {
+    controller.scannedDataStream.listen((scanData) async{
+      controller.pauseCamera();
+
+      dynamic person = await QrWebServices(Dio()).getPersonData(code: scanData.code??"");
+      print('______________________________________________');
+
+      print(person.runtimeType);
+      print(person);
+
       setState(() {
-        result = scanData;
+        print('1');
+        if(person is Person){
+          result = person.name;
+          print(person.name);
+          print('2');
+
+        }
+
+        else{
+          result = person['status'];
+          print('3');
+
+        }
+        print('4');
         isScanning = false;
         fadeInOutController.forward(from: 0.0);
       });
-      controller.pauseCamera();
     });
   }
 
   void _onPermissionSet(QRViewController controller, bool permission) {
     if (!permission) {
-      // Handle permissions not granted
+
     }
   }
 
