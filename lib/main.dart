@@ -19,14 +19,14 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'IEEE',
+      title: 'Sprit',
       onGenerateRoute: AppRoutes().generateRoute,
-      initialRoute: ScanScreen.routeName,
+      initialRoute: SplashScreen.routeName,
       routes: {
         SplashScreen.routeName :(_)=>SplashScreen(),
         HomeScreen.routeName :(_)=>HomeScreen(),
         ScanScreen.routeName :(_)=>ScanScreen(),
-        GenerateScreen.routeName :(_)=>GenerateScreen(),
+
       },
     );
   }

@@ -49,23 +49,7 @@ class HomeScreen extends StatelessWidget {
                       ),
                     )),
               ),
-              SizedBox(
-                height: 25,
-              ),
-              Container(
-                width: MediaQuery.of(context).size.width * .55,
-                height: MediaQuery.of(context).size.height * .060,
 
-                child: ElevatedButton(
-
-                    onPressed: () {
-                      Navigator.pushNamed(context, GenerateScreen.routeName);
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                      child: Text(generate, style: TextAppStyle.btnStyle()),
-                    )),
-              ),
             ],
           ),
         ),
