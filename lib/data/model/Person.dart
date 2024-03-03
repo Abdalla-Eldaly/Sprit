@@ -14,7 +14,8 @@ class Person {
       this.id, 
       this.name, 
       this.email, 
-      this.phone, 
+      this.phone,
+    this.ticket,
       this.university, 
       this.collage, 
       this.academicYear, 
@@ -26,6 +27,7 @@ class Person {
     id = json['id'];
     name = json['name'];
     email = json['email'];
+    ticket= json['ticket'];
     phone = json['phone'];
     university = json['university'];
     collage = json['collage'];
@@ -39,6 +41,7 @@ class Person {
   String? email;
   String? phone;
   String? university;
+  String? ticket;
   String? collage;
   String? academicYear;
   String? nationalId;
@@ -49,6 +52,8 @@ Person copyWith({  int? id,
   String? email,
   String? phone,
   String? university,
+  String? ticket,
+
   String? collage,
   String? academicYear,
   String? nationalId,
@@ -59,6 +64,7 @@ Person copyWith({  int? id,
   email: email ?? this.email,
   phone: phone ?? this.phone,
   university: university ?? this.university,
+  ticket: ticket ?? this.ticket,
   collage: collage ?? this.collage,
   academicYear: academicYear ?? this.academicYear,
   nationalId: nationalId ?? this.nationalId,
@@ -72,6 +78,7 @@ Person copyWith({  int? id,
     map['email'] = email;
     map['phone'] = phone;
     map['university'] = university;
+    map['ticket'] = ticket;
     map['collage'] = collage;
     map['academic_year'] = academicYear;
     map['national_id'] = nationalId;

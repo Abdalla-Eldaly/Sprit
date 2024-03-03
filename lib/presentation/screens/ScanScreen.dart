@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_offline/flutter_offline.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
 import 'package:qr_ieee/constants/colors.dart';
 import 'package:qr_ieee/constants/text_style.dart';
@@ -7,6 +8,7 @@ import 'package:qr_ieee/data/model/Person.dart';
 import 'package:qr_ieee/data/web_services/web_Service.dart';
 
 import '../../constants/strings.dart';
+import '../widgets/buildNoInternet.dart';
 
 class ScanScreen extends StatefulWidget {
   static const String routeName = 'scan';
@@ -52,40 +54,58 @@ class _ScanScreenState extends State<ScanScreen> with TickerProviderStateMixin {
         backgroundColor: MyColor.Accent,
         actions: [
           IconButton(
-            icon: Icon(isFlashOn ?Icons.flash_on:Icons.flash_off, size: 40, color: MyColor.White),
+            icon: Icon(isFlashOn ? Icons.flash_on : Icons.flash_off,
+                size: 40, color: MyColor.White),
             onPressed: _toggleFlash,
           ),
           IconButton(
-            icon: Icon(isScanning ? Icons.stop : Icons.play_arrow, size: 40, color: MyColor.White),
+            icon: Icon(isScanning ? Icons.stop : Icons.play_arrow,
+                size: 40, color: MyColor.White),
             onPressed: _toggleScanning,
           ),
           IconButton(
-            icon: Icon(Icons.flip_camera_android, size: 40, color: MyColor.White),
+            icon:
+                Icon(Icons.flip_camera_android, size: 40, color: MyColor.White),
             onPressed: _toggleCamera,
           ),
         ],
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          Expanded(
-            flex: 2,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                _buildQRView(),
-                if (isScanning) _buildPulsatingAnimation(),
+      body: OfflineBuilder(
+        connectivityBuilder: (
+            BuildContext context,
+            ConnectivityResult connectivity,
+            Widget child,
+            ) {
+          final bool connected = connectivity != ConnectivityResult.none;
+
+          if (connected) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                Expanded(
+                  flex: 2,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      _buildQRView(),
+                      if (isScanning) _buildPulsatingAnimation(),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  flex: 1,
+                  child: _buildResultDisplay(),
+                ),
+                _buildResetButton(),
               ],
-            ),
-          ),
-          Expanded(
-            flex: 1,
-            child: _buildResultDisplay(),
-          ),
-          _buildResetButton(),
-        ],
-      ),
-    );
+            );
+          } else {
+            return BuildNoInternet();
+          }
+        },
+        child: Center(child: CircularProgressIndicator()),
+      ));
+
   }
 
   Widget _buildQRView() {
@@ -99,7 +119,8 @@ class _ScanScreenState extends State<ScanScreen> with TickerProviderStateMixin {
         borderWidth: 14,
         cutOutSize: 310,
       ),
-      onPermissionSet: (controller, permission) => _onPermissionSet(controller, permission),
+      onPermissionSet: (controller, permission) =>
+          _onPermissionSet(controller, permission),
     );
   }
 
@@ -126,7 +147,8 @@ class _ScanScreenState extends State<ScanScreen> with TickerProviderStateMixin {
     return Text(
       text,
       style: TextAppStyle.btnStyle(),
-      textAlign: TextAlign.center,
+      textAlign: TextAlign.left,
+    // overflow: TextOverflow.ellipsis,
     );
   }
 
@@ -146,18 +168,24 @@ class _ScanScreenState extends State<ScanScreen> with TickerProviderStateMixin {
       padding: const EdgeInsets.all(16.0),
       child: ElevatedButton(
         onPressed: _resetScan,
-        child: Text(resetscan,style: TextAppStyle.scanerText(),),
+        child: Text(
+          resetscan,
+          style: TextAppStyle.scanerText(),
+        ),
       ),
     );
   }
 
   void _onQRViewCreated(QRViewController controller) {
-
     this.controller = controller;
-    controller.scannedDataStream.listen((scanData) async{
+    controller.scannedDataStream.listen((scanData) async {
       controller.pauseCamera();
 
-      dynamic person = await QrWebServices(Dio()).getPersonData(code: scanData.code??"");
+
+      dynamic person =
+          await QrWebServices(Dio()).getPersonData(code: scanData.code ?? "");
+
+
       print('______________________________________________');
 
       print(person.runtimeType);
@@ -165,17 +193,17 @@ class _ScanScreenState extends State<ScanScreen> with TickerProviderStateMixin {
 
       setState(() {
         print('1');
-        if(person is Person){
-          result = person.name;
+
+        if (person is Person) {
+
+
+          result = 'Name: ${person.name}\nTicket: ${person.ticket}';
           print(person.name);
           print('2');
+        } else {
 
-        }
-
-        else{
           result = person['status'];
           print('3');
-
         }
         print('4');
         isScanning = false;
@@ -185,9 +213,7 @@ class _ScanScreenState extends State<ScanScreen> with TickerProviderStateMixin {
   }
 
   void _onPermissionSet(QRViewController controller, bool permission) {
-    if (!permission) {
-
-    }
+    if (!permission) {}
   }
 
   void _toggleScanning() {
