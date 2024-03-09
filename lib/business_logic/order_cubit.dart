@@ -10,24 +10,17 @@ part 'order_state.dart';
 
 class OrderCubit extends Cubit<OrderState> {
   OrderCubit() : super(OrderInitial());
-
-  List<Data> ordersList = [];
   
-  Future<void> getOrder(String phoneNumber) async {
-    try {
-      dynamic data = await rootBundle.loadString('assets/jsons/orders.json');
-      data = json.decode(data);
-      OrdersModel orders = OrdersModel.fromJson(data);
-      ordersList.clear();
-      for (Data order in orders.data!) {
-        if (order.phone == phoneNumber) {
-          ordersList.add(order);
-        }
+  Future<List<Data>> getOrder(String phoneNumber) async {
+    dynamic data = await rootBundle.loadString('assets/jsons/orders.json');
+    data = json.decode(data);
+    OrdersModel orders = OrdersModel.fromJson(data);
+    List<Data> ordersList = [];
+    for (Data order in orders.data!) {
+      if (order.phone == phoneNumber) {
+        ordersList.add(order);
       }
-      emit(OrderLoaded());
-    } catch (e) {
-      emit(OrderFailed());
     }
-
+    return ordersList;
   }
 }
