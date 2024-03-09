@@ -6,7 +6,6 @@ import 'package:qr_ieee/constants/text_style.dart';
 import 'package:qr_ieee/presentation/screens/ScanScreen.dart';
 
 import '../../constants/colors.dart';
-import 'generateScreen.dart';
 
 class HomeScreen extends StatelessWidget {
   static String routeName = 'homeScreen';
