@@ -1,3 +1,5 @@
+import 'package:qr_ieee/data/model/Data.dart';
+
 /// id : 1
 /// name : "test1"
 /// email : "test1@mail.com"
@@ -11,23 +13,25 @@
 
 class Person {
   Person({
-      this.id, 
-      this.name, 
-      this.email, 
-      this.phone,
+    this.id,
+    this.name,
+    this.email,
+    this.phone,
     this.ticket,
-      this.university, 
-      this.collage, 
-      this.academicYear, 
-      this.nationalId, 
-      this.time, 
-      this.checked,});
+    this.university,
+    this.collage,
+    this.academicYear,
+    this.nationalId,
+    this.time,
+    this.checked,
+    this.orders,
+  });
 
   Person.fromJson(dynamic json) {
     id = json['id'];
     name = json['name'];
     email = json['email'];
-    ticket= json['ticket'];
+    ticket = json['ticket'];
     phone = json['phone'];
     university = json['university'];
     collage = json['collage'];
@@ -36,6 +40,7 @@ class Person {
     time = json['time'];
     checked = json['checked'];
   }
+
   int? id;
   String? name;
   String? email;
@@ -47,30 +52,35 @@ class Person {
   String? nationalId;
   String? time;
   String? checked;
-Person copyWith({  int? id,
-  String? name,
-  String? email,
-  String? phone,
-  String? university,
-  String? ticket,
+  List<Data>? orders;
 
-  String? collage,
-  String? academicYear,
-  String? nationalId,
-  String? time,
-  String? checked,
-}) => Person(  id: id ?? this.id,
-  name: name ?? this.name,
-  email: email ?? this.email,
-  phone: phone ?? this.phone,
-  university: university ?? this.university,
-  ticket: ticket ?? this.ticket,
-  collage: collage ?? this.collage,
-  academicYear: academicYear ?? this.academicYear,
-  nationalId: nationalId ?? this.nationalId,
-  time: time ?? this.time,
-  checked: checked ?? this.checked,
-);
+  Person copyWith({
+    int? id,
+    String? name,
+    String? email,
+    String? phone,
+    String? university,
+    String? ticket,
+    String? collage,
+    String? academicYear,
+    String? nationalId,
+    String? time,
+    String? checked,
+  }) =>
+      Person(
+        id: id ?? this.id,
+        name: name ?? this.name,
+        email: email ?? this.email,
+        phone: phone ?? this.phone,
+        university: university ?? this.university,
+        ticket: ticket ?? this.ticket,
+        collage: collage ?? this.collage,
+        academicYear: academicYear ?? this.academicYear,
+        nationalId: nationalId ?? this.nationalId,
+        time: time ?? this.time,
+        checked: checked ?? this.checked,
+      );
+
   Map<String, dynamic> toJson() {
     final map = <String, dynamic>{};
     map['id'] = id;
@@ -86,5 +96,4 @@ Person copyWith({  int? id,
     map['checked'] = checked;
     return map;
   }
-
 }

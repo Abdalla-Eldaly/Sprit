@@ -1,5 +1,10 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_offline/flutter_offline.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
 import 'package:qr_ieee/constants/colors.dart';
@@ -8,6 +13,8 @@ import 'package:qr_ieee/data/model/Person.dart';
 import 'package:qr_ieee/data/web_services/web_Service.dart';
 
 import '../../constants/strings.dart';
+import '../../data/model/Data.dart';
+import '../../data/model/OrdersModel.dart';
 import '../widgets/buildNoInternet.dart';
 
 class ScanScreen extends StatefulWidget {
@@ -19,7 +26,9 @@ class ScanScreen extends StatefulWidget {
 
 class _ScanScreenState extends State<ScanScreen> with TickerProviderStateMixin {
   final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
-  String? result;
+  String? name;
+  String? ticket;
+  List<dynamic> orders = [];
   QRViewController? controller;
   bool isFlashOn = false;
   bool isScanning = false;
@@ -41,71 +50,86 @@ class _ScanScreenState extends State<ScanScreen> with TickerProviderStateMixin {
     );
   }
 
+  Future<List<Data>> getOrder(String phoneNumber) async {
+    dynamic data = await rootBundle.loadString('assets/jsons/orders.json');
+    data = json.decode(data);
+    OrdersModel orders = OrdersModel.fromJson(data);
+    List<Data> ordersList = [];
+    for (Data order in orders.data!) {
+      if (order.phone == phoneNumber) {
+        ordersList.add(order);
+      }
+    }
+    return ordersList;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        toolbarHeight: MediaQuery.of(context).size.height * 0.10,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, size: 30, color: MyColor.White),
-          onPressed: () => Navigator.of(context).pop(),
+        appBar: AppBar(
+          toolbarHeight: MediaQuery.of(context).size.height * 0.10,
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back, size: 30, color: MyColor.White),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          title: Text(qrscanner, style: TextAppStyle.scanerbar()),
+          backgroundColor: MyColor.Accent,
+          actions: [
+            IconButton(
+              icon: Icon(isFlashOn ? Icons.flash_on : Icons.flash_off,
+                  size: 40, color: MyColor.White),
+              onPressed: _toggleFlash,
+            ),
+            IconButton(
+              icon: Icon(isScanning ? Icons.stop : Icons.play_arrow,
+                  size: 40, color: MyColor.White),
+              onPressed: _toggleScanning,
+            ),
+            IconButton(
+              icon: Icon(Icons.flip_camera_android,
+                  size: 40, color: MyColor.White),
+              onPressed: _toggleCamera,
+            ),
+          ],
         ),
-        title: Text(qrscanner, style: TextAppStyle.scanerbar()),
-        backgroundColor: MyColor.Accent,
-        actions: [
-          IconButton(
-            icon: Icon(isFlashOn ? Icons.flash_on : Icons.flash_off,
-                size: 40, color: MyColor.White),
-            onPressed: _toggleFlash,
-          ),
-          IconButton(
-            icon: Icon(isScanning ? Icons.stop : Icons.play_arrow,
-                size: 40, color: MyColor.White),
-            onPressed: _toggleScanning,
-          ),
-          IconButton(
-            icon:
-                Icon(Icons.flip_camera_android, size: 40, color: MyColor.White),
-            onPressed: _toggleCamera,
-          ),
-        ],
-      ),
-      body: OfflineBuilder(
-        connectivityBuilder: (
+        body: OfflineBuilder(
+          connectivityBuilder: (
             BuildContext context,
             ConnectivityResult connectivity,
             Widget child,
-            ) {
-          final bool connected = connectivity != ConnectivityResult.none;
+          ) {
+            final bool connected = connectivity != ConnectivityResult.none;
 
-          if (connected) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: <Widget>[
-                Expanded(
-                  flex: 2,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      _buildQRView(),
-                      if (isScanning) _buildPulsatingAnimation(),
-                    ],
+            if (connected) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  Expanded(
+                    flex: 3,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        _buildQRView(),
+                        if (isScanning) _buildPulsatingAnimation(),
+                      ],
+                    ),
                   ),
-                ),
-                Expanded(
-                  flex: 1,
-                  child: _buildResultDisplay(),
-                ),
-                _buildResetButton(),
-              ],
-            );
-          } else {
-            return BuildNoInternet();
-          }
-        },
-        child: Center(child: CircularProgressIndicator()),
-      ));
-
+                  Expanded(
+                    flex: 2,
+                    child: SingleChildScrollView(
+                      physics: BouncingScrollPhysics(),
+                      child: _buildResultDisplay(),
+                    ),
+                  ),
+                  _buildResetButton(),
+                ],
+              );
+            } else {
+              return BuildNoInternet();
+            }
+          },
+          child: Center(child: CircularProgressIndicator()),
+        ));
   }
 
   Widget _buildQRView() {
@@ -133,8 +157,10 @@ class _ScanScreenState extends State<ScanScreen> with TickerProviderStateMixin {
           child: Center(
             child: Opacity(
               opacity: fadeInOutController.value,
-              child: result != null
-                  ? _buildResultText('QR Code Data: \n\n${result}')
+              child: name != null
+                  ? _buildResult(name !=
+                          'the user not found!, please check your QR code' &&
+                      name != "the QR code has been checked before")
                   : _buildResultText('Scan a QR code'),
             ),
           ),
@@ -143,12 +169,53 @@ class _ScanScreenState extends State<ScanScreen> with TickerProviderStateMixin {
     );
   }
 
+  Widget _buildResult(bool status) {
+    if (status) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(child: _buildResultText('Scan a QR code')),
+          SizedBox(height: 10),
+          _buildResultText(name!),
+          Divider(height: 30),
+          _buildResultText(ticket!),
+          Divider(height: 30),
+          Center(
+            child: _buildResultText('Orders'),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: orders
+                .map(
+                  (e) => Container(
+                    alignment: Alignment.centerRight,
+                    child: Directionality(
+                      textDirection: TextDirection.rtl,
+                      child: _buildResultText(e),
+                    ),
+                  ),
+                )
+                .toList(),
+          )
+        ],
+      );
+    } else {
+      return Column(
+        children: [
+          _buildResultText('Error'),
+          SizedBox(height: 30),
+          _buildResultText(name!),
+        ],
+      );
+    }
+  }
+
   Widget _buildResultText(String text) {
     return Text(
       text,
       style: TextAppStyle.btnStyle(),
       textAlign: TextAlign.left,
-    // overflow: TextOverflow.ellipsis,
+      // overflow: TextOverflow.ellipsis,
     );
   }
 
@@ -181,31 +248,32 @@ class _ScanScreenState extends State<ScanScreen> with TickerProviderStateMixin {
     controller.scannedDataStream.listen((scanData) async {
       controller.pauseCamera();
 
-
       dynamic person =
           await QrWebServices(Dio()).getPersonData(code: scanData.code ?? "");
-
 
       print('______________________________________________');
 
       print(person.runtimeType);
       print(person);
 
+      if (person is Person) {
+        name = 'Name: ${person.name}';
+        ticket = 'Ticket: ${person.ticket}';
+        var ordersList = await getOrder(person.phone!);
+        orders.clear();
+        for (var order in ordersList) {
+          orders.add('- ${order.order}');
+        }
+        print(person.name);
+        print('2');
+      } else {
+        name = person['status'];
+        print('3');
+      }
+      print('4');
+
       setState(() {
         print('1');
-
-        if (person is Person) {
-
-
-          result = 'Name: ${person.name}\nTicket: ${person.ticket}';
-          print(person.name);
-          print('2');
-        } else {
-
-          result = person['status'];
-          print('3');
-        }
-        print('4');
         isScanning = false;
         fadeInOutController.forward(from: 0.0);
       });
@@ -258,7 +326,7 @@ class _ScanScreenState extends State<ScanScreen> with TickerProviderStateMixin {
       controller!.resumeCamera();
     }
     setState(() {
-      result = null;
+      name = null;
       isScanning = true;
     });
   }
